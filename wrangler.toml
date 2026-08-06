@@ -1,4 +1,4 @@
-name = "crystal-farm"
+name = "pages"
 main = "src/worker.js"
 compatibility_date = "2024-09-23"
 
@@ -15,7 +15,7 @@ database_id = "614f96af-be19-4f99-85d9-3e2b2ee48c8e"
 [vars]
 # URL của chính Worker này (sau khi deploy), dùng để gắn nút "Chơi ngay"
 # trong tin nhắn trả lời /start. Ví dụ: https://crystal-tap-game.<subdomain>.workers.dev
-MINI_APP_URL = "https://crystal-farm.pagesm.workers.dev"
+MINI_APP_URL = "https://pages.crystal-farm.workers.dev"
 
 # Optional: set your Telegram bot token as a secret to validate initData
 # và để bot có thể gửi tin nhắn trả lời /start
