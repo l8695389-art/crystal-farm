@@ -1,0 +1,25 @@
+name = "crystal-tap-game"
+main = "src/worker.js"
+compatibility_date = "2024-09-23"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "crystal_tap_db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[vars]
+# URL của chính Worker này (sau khi deploy), dùng để gắn nút "Chơi ngay"
+# trong tin nhắn trả lời /start. Ví dụ: https://crystal-tap-game.<subdomain>.workers.dev
+MINI_APP_URL = "https://REPLACE_WITH_YOUR_WORKER_URL"
+
+# Optional: set your Telegram bot token as a secret to validate initData
+# và để bot có thể gửi tin nhắn trả lời /start
+# wrangler secret put BOT_TOKEN
+
+# Optional: đặt secret token cho webhook để xác minh request thực sự từ Telegram
+# wrangler secret put WEBHOOK_SECRET
