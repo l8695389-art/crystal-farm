@@ -21,7 +21,7 @@ MINI_APP_URL = "https://pages.crystal-farm.workers.dev/"
 # với BotFather) — dùng để dựng link mời bạn dạng:
 #   https://t.me/<BOT_USERNAME>/<APP_SHORT_NAME>?startapp=ref_<uid>
 BOT_USERNAME = "crystalfarmx_bot"
-APP_SHORT_NAME = "https://t.me/crystalfarmx_bot/crystalfarm"
+APP_SHORT_NAME = "crystalfarm"
 
 # Optional: set your Telegram bot token as a secret to validate initData
 # và để bot có thể gửi tin nhắn trả lời /start
