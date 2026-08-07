@@ -46,6 +46,14 @@ wrangler d1 execute crystal_tap_db --local --file=./migrations/0001_init.sql
 wrangler d1 execute crystal_tap_db --remote --file=./migrations/0001_init.sql
 ```
 
+Nếu database đã tồn tại từ trước khi có gem/cấp đào/mời bạn, chạy thêm:
+
+```bash
+wrangler d1 execute crystal_tap_db --remote --file=./migrations/0003_gems_level_referral.sql
+```
+
+*(Cài mới hoàn toàn thì bỏ qua bước này — `0001_init.sql` đã có sẵn đủ cột.)*
+
 ### 4. (Khuyến nghị) Bật xác thực dữ liệu Telegram
 
 Lấy bot token từ [@BotFather](https://t.me/BotFather), rồi:
@@ -102,6 +110,29 @@ nút bấm mở thẳng Mini App.
 Muốn thêm lệnh khác (`/help`, `/leaderboard`...), sửa hàm `handleTelegramUpdate`
 trong `src/worker.js`.
 
+### 8. Cấu hình link mời bạn (tab Bạn bè)
+
+Link mời bạn dùng định dạng "direct link" của Telegram Mini App:
+`https://t.me/<bot_username>/<app_short_name>?startapp=ref_<uid>` — khi người
+được mời mở link này, Telegram tự đưa `ref_<uid>` vào `initDataUnsafe.start_param`
+để app đọc và đăng ký giới thiệu.
+
+1. Lấy **username bot** (không có `@`) và **short name** của Mini App —
+   short name được đặt lúc chạy `/newapp` với BotFather (hoặc xem lại qua
+   `/myapps` nếu quên).
+2. Điền vào `wrangler.toml`:
+   ```toml
+   BOT_USERNAME = "ten_bot_cua_ban"
+   APP_SHORT_NAME = "ten_ngan_cua_app"
+   ```
+3. Deploy lại:
+   ```bash
+   wrangler deploy
+   ```
+
+Nếu bỏ trống 2 biến này, tab Bạn bè vẫn hoạt động nhưng sẽ báo "Chưa cấu
+hình" thay vì hiển thị link thật.
+
 ## Local dev
 
 ```bash
@@ -146,14 +177,70 @@ Cài mới hoàn toàn thì chỉ cần chạy `0001_init.sql` (đã có sẵn 2
 
 ## Cơ chế đồng bộ dữ liệu
 
-- Toàn bộ state của người chơi (xu, năng lượng, chuỗi điểm danh, nhiệm vụ đã nhận...)
-  được lưu trong bảng `players` của D1, khoá theo Telegram user ID.
+- Toàn bộ state của người chơi (xu, gem, năng lượng, cấp đào, chuỗi điểm danh,
+  nhiệm vụ đã nhận, mời bạn...) được lưu trong bảng `players` của D1, khoá
+  theo Telegram user ID.
 - Năng lượng hồi theo thời gian thực: server tính lại phần hồi khi offline
   dựa trên `last_energy_ts` mỗi khi client gọi `GET /api/player`.
 - Bảng xếp hạng lấy trực tiếp từ D1 (`ORDER BY coins DESC LIMIT 10`),
   không cần bảng riêng.
 - Ghi dữ liệu được debounce ở client (500ms sau lần thay đổi cuối) để giảm
   số lần gọi API.
+
+## Các hệ thống mới
+
+### Gem & Shop (đổi Gem)
+- Tỉ lệ quy đổi cố định: **100.000 coin = 1 gem**.
+- Ô nhập ở tab Shop chỉ chấp nhận bội số của 100.000 (validate cả client
+  lẫn server ở endpoint `POST /api/gem-exchange`).
+- Lịch sử đổi gem (tối đa 20 lượt gần nhất) lưu trong cột `gem_exchange_log`,
+  hiển thị lại ở tab Ví.
+
+### Cấp độ đào (tab Đào)
+- Tối đa **cấp 20**. Cấp 1 → 2 cần 500 XP, mỗi cấp sau đó cần thêm 300 XP
+  so với cấp trước (cấp 2→3: 800 XP, cấp 3→4: 1.100 XP...).
+- Mỗi lần chạm được +10 XP; cấp càng cao, mỗi lần chạm nhận thêm +5% coin
+  (cấp 20 = +95% so với cấp 1).
+- Cấp độ được validate/giới hạn (clamp 1-20) ở server khi lưu, nhưng XP
+  tích luỹ vẫn do client tính (giống mô hình tin cậy client đang dùng cho
+  coin/energy — xem mục "Nâng cấp gợi ý" bên dưới nếu cần chống gian lận
+  chặt hơn).
+
+### Mời bạn bè (tab Bạn bè)
+- Link mời: `https://t.me/<bot>/<app>?startapp=ref_<uid>` (xem bước 8 ở trên).
+- Khi người được mời mở app **lần đầu tiên**, server:
+  1. Đọc `ref_<uid>` từ `start_param`.
+  2. **Kiểm tra uid người mời có thật sự tồn tại trong DB không** trước khi
+     cộng thưởng (chặn giả mạo link với uid bịa).
+  3. Cộng ngay **1.000 coin** cho người mời, +1 vào số bạn đã mời.
+- Sau đó, mỗi khi người được mời kiếm thêm coin (qua bất kỳ hoạt động nào),
+  server tự động cộng **4% hoa hồng** số coin đó cho người mời — tính trên
+  server bằng cách so sánh coin cũ/mới mỗi lần lưu, không cần client tự
+  khai báo hoa hồng.
+- Mốc thưởng mời bạn — người mời tự bấm "Nhận" khi đã đạt mốc (giống cơ chế
+  nhiệm vụ):
+
+  | Số bạn mời | Thưởng |
+  |---|---|
+  | 5 | 5.000 coin + 5 gem |
+  | 10 | 12.000 coin + 12 gem |
+  | 20 | 30.000 coin + 30 gem |
+  | 50 | 100.000 coin + 100 gem |
+
+  Chỉnh số liệu này trong `REFERRAL_MILESTONES` (cả `src/worker.js` lẫn
+  `public/app.js`, phải sửa đồng bộ cả 2 file).
+
+### Ví (tab Ví)
+- Tổng quan số dư coin/gem, thống kê nhanh (lần chạm, chuỗi điểm danh, số
+  bạn mời, hoa hồng đã nhận) và lịch sử đổi gem gần nhất.
+
+## Bảo mật
+
+Các endpoint ghi dữ liệu nhạy cảm (`/api/player`, `/api/gem-exchange`,
+`/api/referral/claim-milestone`) đều kiểm tra `uid` gửi lên khớp với uid đã
+ký trong `initData` Telegram — **chỉ hoạt động khi đã set `BOT_TOKEN`**
+(bước 4). Nếu bỏ qua bước này, server tin theo uid client tự khai (chỉ nên
+dùng khi phát triển/test cục bộ).
 
 ## Nâng cấp gợi ý
 
