@@ -1,5 +1,5 @@
-const MAX_ENERGY = 500;
-const ENERGY_REGEN_MS = 2000; // 1 energy per 2s
+const MAX_ENERGY = 200;
+const ENERGY_REGEN_MS = 300000; // 1 energy per 300s
 
 // ── Cấp độ đào ──
 const MINING_MAX_LEVEL = 20;
@@ -11,7 +11,7 @@ const GEM_EXCHANGE_RATE = 100000; // 100.000 coin = 1 gem
 
 // ── Mời bạn bè ──
 const REFERRAL_SIGNUP_BONUS = 1000; // coin cho người mời khi mời thành công 1 bạn mới
-const REFERRAL_COMMISSION_RATE = 0.04; // hoa hồng 4% trên số coin người được mời kiếm thêm được
+const REFERRAL_COMMISSION_RATE = 0.05; // hoa hồng 5% trên số coin người được mời kiếm thêm được
 const REFERRAL_MILESTONES = [
   { count: 5, coin: 5000, gem: 5 },
   { count: 10, coin: 12000, gem: 12 },
