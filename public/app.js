@@ -1,11 +1,29 @@
 const MAX_ENERGY = 500;
 const ENERGY_REGEN_MS = 2000;
 
+const MINING_MAX_LEVEL = 20;
+const MINING_BASE_XP = 500;
+const MINING_XP_STEP = 300;
+const MINING_XP_PER_TAP = 10;
+
+const GEM_EXCHANGE_RATE = 100000;
+
+const REFERRAL_MILESTONES = [
+  { count: 5, coin: 5000, gem: 5 },
+  { count: 10, coin: 12000, gem: 12 },
+  { count: 20, coin: 30000, gem: 30 },
+  { count: 50, coin: 100000, gem: 100 },
+];
+
 const MISSIONS = [
   { id: "tap50", label: "Chạm 50 lần hôm nay", reward: 100, check: (s) => s.dailyTaps >= 50 },
   { id: "coins1000", label: "Đạt 1.000 xu", reward: 200, check: (s) => s.coins >= 1000 },
   { id: "streak3", label: "Điểm danh 3 ngày liên tiếp", reward: 300, check: (s) => s.streak >= 3 },
 ];
+
+function xpNeededForLevel(level) {
+  return MINING_BASE_XP + MINING_XP_STEP * (level - 1);
+}
 
 function todayStr(ts = Date.now()) {
   return new Date(ts).toISOString().slice(0, 10);
@@ -32,7 +50,6 @@ function setLoadingProgress(pct) {
 function startLoadingAnimation() {
   loadingTickTimer = setInterval(() => {
     if (loadingProgress >= 90) return;
-    // càng gần 90% càng chạy chậm lại, tạo cảm giác đang tải thật
     const step = Math.max(0.5, (90 - loadingProgress) / 12);
     setLoadingProgress(Math.min(90, loadingProgress + step));
   }, 90);
@@ -50,8 +67,6 @@ startLoadingAnimation();
 // --- Telegram identity (falls back to a local id when opened outside Telegram) ---
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
-// App chỉ được phép chạy khi thực sự mở từ Telegram (có initData hợp lệ).
-// Cho phép bỏ qua khi test trên localhost để tiện phát triển với `wrangler dev`.
 const isLocalDev = ["localhost", "127.0.0.1"].includes(location.hostname);
 const isTelegramLaunch = !!(tg && tg.initData && tg.initData.length > 0);
 
@@ -69,6 +84,12 @@ if (tg) {
 const tgUser = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
 const initData = tg ? tg.initData : "";
 
+// Link mời bạn: mở qua t.me/<bot>/<app>?startapp=ref_<uid> sẽ khiến Telegram
+// truyền lại giá trị này qua initDataUnsafe.start_param khi người được mời
+// mở Mini App lần đầu.
+const startParam = tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : "";
+const REFERRED_BY_FROM_LINK = startParam && startParam.startsWith("ref_") ? startParam.slice(4) : null;
+
 function getLocalId() {
   let id = localStorage.getItem("crystal_local_id");
   if (!id) {
@@ -79,8 +100,6 @@ function getLocalId() {
 }
 const PLAYER_ID = tgUser ? String(tgUser.id) : getLocalId();
 
-// Ưu tiên tên hiển thị Telegram (first + last name); nếu không có thì dùng
-// @username; nếu cũng không có thì để trống (sẽ hỏi thủ công ở màn welcome).
 function resolveTelegramNickname(user) {
   if (!user) return "";
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
@@ -99,6 +118,7 @@ function defaultState() {
     username: TELEGRAM_USERNAME,
     avatarUrl: TELEGRAM_AVATAR_URL,
     coins: 0,
+    gems: 0,
     energy: MAX_ENERGY,
     lastEnergyTs: Date.now(),
     streak: 0,
@@ -107,12 +127,20 @@ function defaultState() {
     dailyTaps: 0,
     dailyTapsDate: todayStr(),
     claimedMissions: [],
+    miningLevel: 1,
+    miningXp: 0,
+    referredBy: null,
+    referralCount: 0,
+    referralEarnings: 0,
+    claimedReferralMilestones: [],
+    referredUsers: [],
+    gemExchangeLog: [],
   };
 }
 
 let state = null;
 let saveTimer = null;
-let particleId = 0;
+let botConfig = { botUsername: "", appShortName: "" };
 
 // --- API ---
 async function apiGetPlayer(id) {
@@ -124,13 +152,37 @@ async function apiSavePlayer(player) {
   await fetch("/api/player", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ player, initData }),
+    body: JSON.stringify({ player, initData, referredBy: REFERRED_BY_FROM_LINK }),
   });
 }
 async function apiGetLeaderboard() {
   const res = await fetch("/api/leaderboard");
   const data = await res.json();
   return data.leaderboard || [];
+}
+async function apiGetConfig() {
+  try {
+    const res = await fetch("/api/config");
+    return await res.json();
+  } catch {
+    return { botUsername: "", appShortName: "" };
+  }
+}
+async function apiExchangeGem(coinAmount) {
+  const res = await fetch("/api/gem-exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid: PLAYER_ID, coinAmount, initData }),
+  });
+  return res.json();
+}
+async function apiClaimReferralMilestone(milestone) {
+  const res = await fetch("/api/referral/claim-milestone", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid: PLAYER_ID, milestone, initData }),
+  });
+  return res.json();
 }
 
 function scheduleSave() {
@@ -153,8 +205,6 @@ function scheduleSave() {
       state.dailyTaps = 0;
       state.dailyTapsDate = todayStr();
     }
-    // Đồng bộ tên/ảnh đại diện mới nhất từ Telegram mỗi lần mở lại
-    // (người dùng có thể đã đổi tên hoặc ảnh từ lần trước).
     if (TELEGRAM_NICKNAME) state.nickname = TELEGRAM_NICKNAME;
     if (TELEGRAM_AVATAR_URL) state.avatarUrl = TELEGRAM_AVATAR_URL;
     if (TELEGRAM_USERNAME) state.username = TELEGRAM_USERNAME;
@@ -162,11 +212,11 @@ function scheduleSave() {
     state = defaultState();
   }
 
+  botConfig = await apiGetConfig();
+
   await finishLoadingAnimation();
 
   if (!state.nickname) {
-    // Chỉ xảy ra khi mở ngoài Telegram (test cục bộ) hoặc tài khoản
-    // Telegram không có tên lẫn username.
     document.getElementById("welcome").classList.remove("hidden");
   } else {
     scheduleSave();
@@ -186,6 +236,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
 function showGame() {
   document.getElementById("phone").classList.remove("hidden");
   render();
+  renderReferralLink();
   setInterval(energyTick, ENERGY_REGEN_MS);
   refreshLeaderboard();
 }
@@ -194,7 +245,7 @@ function energyTick() {
   if (state.energy >= MAX_ENERGY) return;
   state.energy = Math.min(MAX_ENERGY, state.energy + 1);
   state.lastEnergyTs = Date.now();
-  renderEnergy();
+  renderBars();
   scheduleSave();
 }
 
@@ -221,15 +272,27 @@ function render() {
   document.getElementById("nick-text").textContent = state.nickname;
   document.getElementById("taps-text").textContent = `${state.totalTaps.toLocaleString()} lần chạm`;
   document.getElementById("coin-text").textContent = state.coins.toLocaleString();
-  renderEnergy();
+  document.getElementById("gem-text").textContent = state.gems.toLocaleString();
+  document.getElementById("level-text").textContent = `Cấp ${state.miningLevel}`;
+  renderBars();
   renderCheckin();
   renderMissions();
+  renderShop();
+  renderFriends();
+  renderWallet();
 }
 
-function renderEnergy() {
-  const pct = Math.round((state.energy / MAX_ENERGY) * 100);
-  document.getElementById("energy-fill").style.width = pct + "%";
+function renderBars() {
+  const energyPct = Math.round((state.energy / MAX_ENERGY) * 100);
+  document.getElementById("energy-fill").style.width = energyPct + "%";
   document.getElementById("energy-text").textContent = `${state.energy}/${MAX_ENERGY}`;
+
+  const maxed = state.miningLevel >= MINING_MAX_LEVEL;
+  const needed = xpNeededForLevel(state.miningLevel);
+  const xpPct = maxed ? 100 : Math.round((state.miningXp / needed) * 100);
+  document.getElementById("xp-fill").style.width = xpPct + "%";
+  document.getElementById("xp-text").textContent = maxed ? "MAX" : `${state.miningXp}/${needed}`;
+  document.getElementById("level-text").textContent = `Cấp ${state.miningLevel}${maxed ? " (Max)" : ""}`;
 }
 
 function renderCheckin() {
@@ -268,6 +331,210 @@ function renderMissions() {
   });
 }
 
+// --- Shop (đổi gem) ---
+function renderShop() {
+  document.getElementById("shop-coin-balance").textContent = state.coins.toLocaleString();
+  document.getElementById("shop-gem-balance").textContent = state.gems.toLocaleString();
+  updateExchangePreview();
+}
+
+function updateExchangePreview() {
+  const input = document.getElementById("exchange-input");
+  const amount = Number(input.value) || 0;
+  const gems = amount > 0 ? Math.floor(amount / GEM_EXCHANGE_RATE) : 0;
+  document.getElementById("exchange-preview-gem").textContent = `${gems.toLocaleString()} gem`;
+}
+
+document.getElementById("exchange-input").addEventListener("input", updateExchangePreview);
+
+document.querySelectorAll(".quick-amount-btn[data-amount]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("exchange-input").value = btn.dataset.amount;
+    updateExchangePreview();
+  });
+});
+
+document.getElementById("quick-amount-max").addEventListener("click", () => {
+  const maxMultiple = Math.floor(state.coins / GEM_EXCHANGE_RATE) * GEM_EXCHANGE_RATE;
+  document.getElementById("exchange-input").value = maxMultiple || 0;
+  updateExchangePreview();
+});
+
+document.getElementById("exchange-btn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("exchange-error");
+  const successEl = document.getElementById("exchange-success");
+  errorEl.style.display = "none";
+  successEl.style.display = "none";
+
+  const input = document.getElementById("exchange-input");
+  const amount = Number(input.value);
+
+  if (!amount || amount <= 0) {
+    errorEl.textContent = "Vui lòng nhập số coin muốn đổi.";
+    errorEl.style.display = "block";
+    return;
+  }
+  if (amount % GEM_EXCHANGE_RATE !== 0) {
+    errorEl.textContent = `Số coin phải là bội số của ${GEM_EXCHANGE_RATE.toLocaleString()}.`;
+    errorEl.style.display = "block";
+    return;
+  }
+  if (amount > state.coins) {
+    errorEl.textContent = "Bạn không đủ coin để đổi số lượng này.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  const btn = document.getElementById("exchange-btn");
+  btn.disabled = true;
+  btn.textContent = "Đang xử lý...";
+
+  try {
+    const result = await apiExchangeGem(amount);
+    btn.disabled = false;
+    btn.textContent = "Đổi ngay";
+
+    if (result.ok) {
+      state.coins = result.coins;
+      state.gems = result.gems;
+      state.gemExchangeLog = result.gemExchangeLog;
+      input.value = "";
+      updateExchangePreview();
+      successEl.textContent = `Đã đổi thành công! +${(amount / GEM_EXCHANGE_RATE).toLocaleString()} gem`;
+      successEl.style.display = "block";
+      render();
+    } else {
+      const messages = {
+        invalid_amount: `Số coin phải là bội số của ${GEM_EXCHANGE_RATE.toLocaleString()}.`,
+        insufficient_coins: "Bạn không đủ coin để đổi.",
+        unauthorized: "Không xác thực được, thử mở lại app.",
+      };
+      errorEl.textContent = messages[result.error] || "Không đổi được, thử lại sau.";
+      errorEl.style.display = "block";
+    }
+  } catch {
+    btn.disabled = false;
+    btn.textContent = "Đổi ngay";
+    errorEl.textContent = "Lỗi kết nối, thử lại sau.";
+    errorEl.style.display = "block";
+  }
+});
+
+// --- Friends (mời bạn) ---
+function buildReferralLink() {
+  if (botConfig.botUsername && botConfig.appShortName) {
+    return `https://t.me/${botConfig.botUsername}/${botConfig.appShortName}?startapp=ref_${PLAYER_ID}`;
+  }
+  return "";
+}
+
+function renderReferralLink() {
+  const link = buildReferralLink();
+  const el = document.getElementById("ref-link-text");
+  el.textContent = link || "Chưa cấu hình BOT_USERNAME / APP_SHORT_NAME trên Worker";
+  document.getElementById("ref-copy-btn").dataset.link = link;
+}
+
+document.getElementById("ref-copy-btn").addEventListener("click", async (e) => {
+  const link = e.currentTarget.dataset.link;
+  if (!link) return;
+  await navigator.clipboard.writeText(link).catch(() => {});
+  const btn = e.currentTarget;
+  const old = btn.textContent;
+  btn.textContent = "Đã chép ✓";
+  setTimeout(() => (btn.textContent = old), 1500);
+});
+
+function renderFriends() {
+  document.getElementById("friend-count").textContent = state.referralCount.toLocaleString();
+  document.getElementById("friend-earnings").textContent = state.referralEarnings.toLocaleString();
+
+  const milestoneList = document.getElementById("milestone-list");
+  milestoneList.innerHTML = "";
+  for (const m of REFERRAL_MILESTONES) {
+    const reached = state.referralCount >= m.count;
+    const claimed = state.claimedReferralMilestones.includes(m.count);
+    const row = document.createElement("div");
+    row.className = "milestone-row";
+    row.innerHTML = `
+      <div class="milestone-icon ${reached ? "done" : ""}">${m.count}</div>
+      <div class="milestone-info">
+        <div class="milestone-title">Mời ${m.count} bạn</div>
+        <div class="milestone-sub">Thưởng ${m.coin.toLocaleString()} coin + ${m.gem} gem</div>
+      </div>
+      ${
+        claimed
+          ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`
+          : `<button class="claim-btn" ${reached ? "" : "disabled"} data-milestone="${m.count}">Nhận</button>`
+      }
+    `;
+    milestoneList.appendChild(row);
+  }
+  milestoneList.querySelectorAll(".claim-btn").forEach((btn) => {
+    btn.addEventListener("click", () => claimReferralMilestone(Number(btn.dataset.milestone)));
+  });
+
+  const friendList = document.getElementById("friend-list");
+  if (!state.referredUsers || !state.referredUsers.length) {
+    friendList.innerHTML = `<div class="sub-text">Chưa mời được người bạn nào.</div>`;
+  } else {
+    friendList.innerHTML = state.referredUsers
+      .slice(0, 30)
+      .map(
+        (u) => `
+        <div class="lb-row">
+          <span class="lb-name">${escapeHtml(u.nickname || "Người chơi")}</span>
+          <span class="sub-text">${new Date(u.ts).toLocaleDateString("vi-VN")}</span>
+        </div>`
+      )
+      .join("");
+  }
+}
+
+async function claimReferralMilestone(milestone) {
+  try {
+    const result = await apiClaimReferralMilestone(milestone);
+    if (result.ok) {
+      state.coins = result.coins;
+      state.gems = result.gems;
+      state.claimedReferralMilestones = result.claimedReferralMilestones;
+      showToast(`Nhận +${result.reward.coin.toLocaleString()} coin, +${result.reward.gem} gem`);
+      render();
+    } else {
+      showToast("Chưa thể nhận thưởng mốc này.");
+    }
+  } catch {
+    showToast("Lỗi kết nối, thử lại sau.");
+  }
+}
+
+// --- Wallet ---
+function renderWallet() {
+  document.getElementById("wallet-coin").textContent = state.coins.toLocaleString();
+  document.getElementById("wallet-gem").textContent = state.gems.toLocaleString();
+  document.getElementById("wallet-taps").textContent = state.totalTaps.toLocaleString();
+  document.getElementById("wallet-streak").textContent = state.streak.toLocaleString();
+  document.getElementById("wallet-friends").textContent = state.referralCount.toLocaleString();
+  document.getElementById("wallet-commission").textContent = state.referralEarnings.toLocaleString();
+
+  const historyEl = document.getElementById("wallet-history");
+  if (!state.gemExchangeLog || !state.gemExchangeLog.length) {
+    historyEl.innerHTML = `<div class="sub-text">Chưa có lượt đổi gem nào.</div>`;
+  } else {
+    historyEl.innerHTML = state.gemExchangeLog
+      .map(
+        (h) => `
+        <div class="history-row">
+          <span class="history-coin">-${h.coin.toLocaleString()} coin</span>
+          <span class="history-gem">+${h.gem.toLocaleString()} gem</span>
+          <span class="history-time">${new Date(h.ts).toLocaleDateString("vi-VN")}</span>
+        </div>`
+      )
+      .join("");
+  }
+}
+
+// --- leaderboard ---
 async function renderLeaderboard(rows) {
   const list = document.getElementById("leaderboard-list");
   if (!rows.length) {
@@ -318,7 +585,9 @@ document.getElementById("crystal-wrap").addEventListener("click", (e) => {
   if (state.energy <= 0) return;
 
   const crit = Math.random() < 0.1;
-  const gain = crit ? 6 : 1;
+  const base = crit ? 6 : 1;
+  const levelBonus = 1 + (state.miningLevel - 1) * 0.05;
+  const gain = Math.max(1, Math.round(base * levelBonus));
   const isNewDay = state.dailyTapsDate !== todayStr();
 
   state.coins += gain;
@@ -328,10 +597,26 @@ document.getElementById("crystal-wrap").addEventListener("click", (e) => {
   state.dailyTapsDate = todayStr();
   state.lastEnergyTs = Date.now();
 
+  // XP + lên cấp đào
+  let leveledUp = false;
+  if (state.miningLevel < MINING_MAX_LEVEL) {
+    state.miningXp += MINING_XP_PER_TAP;
+    while (state.miningLevel < MINING_MAX_LEVEL) {
+      const needed = xpNeededForLevel(state.miningLevel);
+      if (state.miningXp < needed) break;
+      state.miningXp -= needed;
+      state.miningLevel += 1;
+      leveledUp = true;
+    }
+    if (state.miningLevel >= MINING_MAX_LEVEL) state.miningXp = 0;
+  }
+
   document.getElementById("coin-text").textContent = state.coins.toLocaleString();
   document.getElementById("taps-text").textContent = `${state.totalTaps.toLocaleString()} lần chạm`;
-  renderEnergy();
+  renderBars();
   renderMissions();
+
+  if (leveledUp) showToast(`🎉 Lên cấp ${state.miningLevel}!`);
 
   const glow = document.getElementById("glow");
   const btn = document.getElementById("crystal-btn");
@@ -384,15 +669,17 @@ function claimMission(id) {
 }
 
 // --- tabs ---
+const TAB_IDS = ["play", "shop", "leaderboard", "friends", "missions", "wallet"];
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    document.getElementById("tab-play").classList.add("hidden");
-    document.getElementById("tab-leaderboard").classList.add("hidden");
-    document.getElementById("tab-missions").classList.add("hidden");
+    TAB_IDS.forEach((id) => document.getElementById("tab-" + id).classList.add("hidden"));
     document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
     if (btn.dataset.tab === "leaderboard") refreshLeaderboard();
+    if (btn.dataset.tab === "shop") renderShop();
+    if (btn.dataset.tab === "friends") renderFriends();
+    if (btn.dataset.tab === "wallet") renderWallet();
   });
 });
 

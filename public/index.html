@@ -17,6 +17,7 @@
     --crystal-glow: #A78BFA;
     --cyan: #3ED8C3;
     --gold: #F5B942;
+    --gem: #FF6FD8;
     --text: #EDEBFF;
     --text-dim: #8B87B0;
     --text-faint: #6B6790;
@@ -44,121 +45,6 @@
   }
   .hidden { display: none !important; }
 
-  /* welcome */
-  .welcome-card {
-    width: 320px;
-    max-width: 100%;
-    margin: 40px auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 36px 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 6px;
-  }
-  .welcome-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; color: var(--text); margin-top: 10px; }
-  .welcome-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; }
-  .text-input {
-    width: 100%; background: var(--bg); border: 1px solid #2C2C52; border-radius: 10px;
-    padding: 10px 14px; color: var(--text); font-size: 14px; margin-bottom: 14px; outline: none;
-  }
-  .primary-btn {
-    width: 100%; background: linear-gradient(135deg,var(--crystal),var(--cyan)); border: none;
-    color: var(--bg); font-weight: 700; font-size: 14px; padding: 12px 0; border-radius: 12px; cursor: pointer;
-  }
-
-  /* header */
-  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .avatar {
-    width: 36px; height: 36px; border-radius: 10px; overflow: hidden;
-    background: linear-gradient(135deg,var(--crystal),var(--cyan));
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--bg);
-    flex-shrink: 0;
-  }
-  .lb-avatar-fallback {
-    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
-    background: linear-gradient(135deg,var(--crystal),var(--cyan));
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; color: var(--bg);
-  }
-  .nick-text { color: var(--text); font-weight: 600; font-size: 14px; }
-  .sub-text { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
-  .coin-pill {
-    display: flex; align-items: center; gap: 6px; background: var(--surface-2);
-    padding: 6px 12px; border-radius: 999px; border: 1px solid #2C2C52;
-  }
-  .coin-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--gold); font-size: 14px; }
-
-  .toast {
-    position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
-    background: var(--surface-2); border: 1px solid #4B3FA0; color: var(--text);
-    font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 999px;
-    z-index: 10; white-space: nowrap; opacity: 0; transition: opacity 200ms ease;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-
-  /* play */
-  .play-area { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 20px 20px; }
-  .crystal-wrap {
-    position: relative; width: 220px; height: 220px; display: flex; align-items: center; justify-content: center;
-    margin-top: 20px; cursor: pointer; user-select: none;
-  }
-  .glow {
-    position: absolute; inset: 0; border-radius: 50%;
-    background: radial-gradient(circle, var(--crystal) 0%, rgba(124,92,252,0) 70%);
-    opacity: .45; transition: opacity 120ms ease;
-  }
-  .glow.pulse { opacity: .9; }
-  .crystal-btn {
-    position: relative; width: 176px; height: 176px; border-radius: 50%;
-    background: linear-gradient(160deg,#3A2E7A,#181A38); border: 1px solid #4B3FA0;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 40px rgba(124,92,252,0.35), inset 0 0 30px rgba(0,0,0,0.4);
-    transition: transform 100ms ease;
-  }
-  .crystal-btn.pulse { transform: scale(0.94); }
-  .crystal-btn svg { width: 96px; height: 96px; }
-  .particle {
-    position: absolute; color: var(--gold); font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700; font-size: 16px; pointer-events: none; animation: floatUp 700ms ease-out forwards;
-  }
-  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
-  .tap-hint { color: var(--text-faint); font-size: 12px; margin-top: 14px; }
-  .energy-row { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 26px; }
-  .energy-track { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
-  .energy-fill { height: 100%; background: linear-gradient(90deg,var(--cyan),var(--crystal)); transition: width 300ms ease; }
-  .energy-text { color: var(--text-dim); font-size: 11px; font-family: 'Space Grotesk', sans-serif; min-width: 62px; text-align: right; }
-  .checkin-btn {
-    margin-top: 18px; display: flex; align-items: center; gap: 8px; background: var(--surface-2);
-    border: 1px solid #2C2C52; color: var(--text); padding: 10px 18px; border-radius: 12px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .checkin-btn:disabled { opacity: .5; cursor: default; }
-
-  /* lists */
-  .list-area { flex: 1; padding: 8px 18px 16px; overflow-y: auto; }
-  .section-title { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; font-size: 14px; margin: 8px 0 14px; }
-  .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
-  .lb-rank { color: var(--text-faint); font-family: 'Space Grotesk', sans-serif; font-weight: 700; width: 20px; }
-  .lb-name { flex: 1; color: var(--text); font-size: 13px; font-weight: 500; }
-  .lb-coins { color: var(--gold); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; }
-  .footnote { color: var(--text-faint); font-size: 11px; margin-top: 10px; text-align: center; }
-  .mission-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
-  .mission-label { color: var(--text); font-size: 13px; font-weight: 500; }
-  .claim-btn { background: linear-gradient(135deg,var(--crystal),var(--cyan)); border: none; color: var(--bg); font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
-  .claim-btn:disabled { opacity: .4; cursor: default; }
-
-  /* nav */
-  .nav { display: flex; border-top: 1px solid var(--surface-2); padding: 8px 4px; background: #0F1024; }
-  .nav-btn { flex: 1; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; padding: 6px 0; cursor: pointer; color: var(--text-faint); }
-  .nav-btn.active { color: var(--crystal-glow); }
-  .nav-btn span { font-size: 11px; margin-top: 2px; }
   .loading {
     color: var(--text-dim); text-align: center; padding: 40px;
   }
@@ -184,6 +70,198 @@
     margin-top: 10px; font-family: 'Space Grotesk', sans-serif; font-size: 12px;
     color: var(--text-faint); letter-spacing: 0.5px;
   }
+
+  /* welcome / blocked */
+  .welcome-card {
+    width: 320px;
+    max-width: 100%;
+    margin: 40px auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .welcome-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; color: var(--text); margin-top: 10px; }
+  .welcome-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; }
+  .text-input {
+    width: 100%; background: var(--bg); border: 1px solid #2C2C52; border-radius: 10px;
+    padding: 10px 14px; color: var(--text); font-size: 14px; margin-bottom: 14px; outline: none;
+  }
+  .primary-btn {
+    width: 100%; background: linear-gradient(135deg,var(--crystal),var(--cyan)); border: none;
+    color: var(--bg); font-weight: 700; font-size: 14px; padding: 12px 0; border-radius: 12px; cursor: pointer;
+  }
+  .primary-btn:disabled { opacity: .5; cursor: default; }
+
+  /* header */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; gap: 8px; }
+  .header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 10px; overflow: hidden;
+    background: linear-gradient(135deg,var(--crystal),var(--cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--bg);
+    flex-shrink: 0;
+  }
+  .lb-avatar-fallback {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    background: linear-gradient(135deg,var(--crystal),var(--cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; color: var(--bg);
+  }
+  .nick-text { color: var(--text); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+  .sub-text { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+  .header-pills { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .coin-pill, .gem-pill {
+    display: flex; align-items: center; gap: 5px; background: var(--surface-2);
+    padding: 6px 10px; border-radius: 999px; border: 1px solid #2C2C52;
+  }
+  .coin-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--gold); font-size: 13px; }
+  .gem-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--gem); font-size: 13px; }
+
+  .toast {
+    position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid #4B3FA0; color: var(--text);
+    font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 999px;
+    z-index: 10; white-space: nowrap; opacity: 0; transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* play */
+  .play-area { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 20px 20px; overflow-y: auto; }
+  .level-badge-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+  .level-badge {
+    display: flex; align-items: center; gap: 6px; background: rgba(124,92,252,0.14);
+    border: 1px solid rgba(124,92,252,0.4); color: var(--crystal-glow);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px;
+    padding: 4px 12px; border-radius: 999px;
+  }
+  .crystal-wrap {
+    position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;
+    margin-top: 12px; cursor: pointer; user-select: none;
+  }
+  .glow {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle, var(--crystal) 0%, rgba(124,92,252,0) 70%);
+    opacity: .45; transition: opacity 120ms ease;
+  }
+  .glow.pulse { opacity: .9; }
+  .crystal-btn {
+    position: relative; width: 160px; height: 160px; border-radius: 50%;
+    background: linear-gradient(160deg,#3A2E7A,#181A38); border: 1px solid #4B3FA0;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(124,92,252,0.35), inset 0 0 30px rgba(0,0,0,0.4);
+    transition: transform 100ms ease;
+  }
+  .crystal-btn.pulse { transform: scale(0.94); }
+  .crystal-btn svg { width: 88px; height: 88px; }
+  .particle {
+    position: absolute; color: var(--gold); font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 16px; pointer-events: none; animation: floatUp 700ms ease-out forwards;
+  }
+  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
+  .tap-hint { color: var(--text-faint); font-size: 12px; margin-top: 12px; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 16px; }
+  .bar-row svg { flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; transition: width 300ms ease; }
+  .bar-fill.energy { background: linear-gradient(90deg,var(--cyan),var(--crystal)); }
+  .bar-fill.xp { background: linear-gradient(90deg,var(--crystal-glow),#FF6FD8); }
+  .bar-text { color: var(--text-dim); font-size: 11px; font-family: 'Space Grotesk', sans-serif; min-width: 68px; text-align: right; }
+
+  .checkin-btn {
+    margin-top: 16px; display: flex; align-items: center; gap: 8px; background: var(--surface-2);
+    border: 1px solid #2C2C52; color: var(--text); padding: 10px 18px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .checkin-btn:disabled { opacity: .5; cursor: default; }
+
+  /* generic cards / lists */
+  .list-area { flex: 1; padding: 8px 18px 16px; overflow-y: auto; }
+  .section-title { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; font-size: 14px; margin: 8px 0 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
+  .lb-rank { color: var(--text-faint); font-family: 'Space Grotesk', sans-serif; font-weight: 700; width: 20px; }
+  .lb-name { flex: 1; color: var(--text); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-coins { color: var(--gold); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; }
+  .footnote { color: var(--text-faint); font-size: 11px; margin-top: 10px; text-align: center; }
+
+  .mission-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
+  .mission-label { color: var(--text); font-size: 13px; font-weight: 500; }
+  .claim-btn { background: linear-gradient(135deg,var(--crystal),var(--cyan)); border: none; color: var(--bg); font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 999px; cursor: pointer; flex-shrink: 0; }
+  .claim-btn:disabled { opacity: .4; cursor: default; }
+
+  /* shop */
+  .shop-balance-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .shop-balance-box { flex: 1; text-align: center; padding: 14px 8px; background: var(--surface-2); border-radius: 12px; }
+  .shop-balance-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+  .shop-balance-label { font-size: 10px; color: var(--text-faint); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .exchange-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .exchange-preview { text-align: center; padding: 12px; background: rgba(255,111,216,0.08); border: 1px solid rgba(255,111,216,0.3); border-radius: 12px; margin-top: 10px; }
+  .exchange-preview-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--gem); font-size: 20px; }
+  .quick-amount-row { display: flex; gap: 8px; margin-top: 10px; }
+  .quick-amount-btn {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+    font-size: 11px; font-weight: 600; padding: 8px 4px; border-radius: 8px; cursor: pointer;
+  }
+  .quick-amount-btn:active { background: var(--border); }
+  .error-text { color: #FF6B6B; font-size: 12px; margin-top: 8px; display: none; }
+  .success-text { color: #3ED8C3; font-size: 12px; margin-top: 8px; display: none; }
+
+  /* friends */
+  .ref-link-box {
+    display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid #2C2C52;
+    border-radius: 10px; padding: 10px 12px; margin-top: 8px;
+  }
+  .ref-link-text { flex: 1; color: var(--text-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Space Grotesk', sans-serif; }
+  .copy-btn {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0;
+  }
+  .friend-stats-row { display: flex; gap: 10px; }
+  .friend-stat-box { flex: 1; text-align: center; padding: 12px 6px; background: var(--surface-2); border-radius: 12px; }
+  .friend-stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: var(--text); }
+  .friend-stat-label { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+  .milestone-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
+  .milestone-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-dim); font-family: 'Space Grotesk', sans-serif; flex-shrink: 0; }
+  .milestone-icon.done { background: rgba(61,216,195,0.15); color: var(--cyan); }
+  .milestone-info { flex: 1; min-width: 0; }
+  .milestone-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .milestone-sub { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+
+  /* wallet */
+  .wallet-hero { display: flex; gap: 10px; margin-bottom: 14px; }
+  .wallet-hero-box { flex: 1; text-align: center; padding: 20px 10px; border-radius: 16px; }
+  .wallet-hero-box.coin { background: linear-gradient(135deg, rgba(245,185,66,0.14), rgba(245,185,66,0.04)); border: 1px solid rgba(245,185,66,0.3); }
+  .wallet-hero-box.gem { background: linear-gradient(135deg, rgba(255,111,216,0.14), rgba(255,111,216,0.04)); border: 1px solid rgba(255,111,216,0.3); }
+  .wallet-hero-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; }
+  .wallet-hero-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .wallet-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .wallet-stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+  .wallet-stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); }
+  .wallet-stat-label { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
+  .history-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; font-size: 12px; }
+  .history-coin { color: var(--gold); font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+  .history-gem { color: var(--gem); font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+  .history-time { color: var(--text-faint); font-size: 10px; }
+
+  /* nav */
+  .nav { display: flex; border-top: 1px solid var(--surface-2); padding: 6px 2px; background: #0F1024; overflow-x: auto; }
+  .nav-btn { flex: 1; min-width: 52px; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; padding: 6px 0; cursor: pointer; color: var(--text-faint); }
+  .nav-btn.active { color: var(--crystal-glow); }
+  .nav-btn span { font-size: 9.5px; margin-top: 2px; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -215,20 +293,33 @@
     <div class="header">
       <div class="header-left">
         <div class="avatar" id="avatar-letter"></div>
-        <div>
+        <div style="min-width:0;">
           <div class="nick-text" id="nick-text"></div>
           <div class="sub-text" id="taps-text"></div>
         </div>
       </div>
-      <div class="coin-pill">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9 9.5c0-1 1-1.5 3-1.5s3 1 3 2-1 1.5-3 1.5-3 .5-3 1.5 1 2 3 2 3-.5 3-1.5"/></svg>
-        <span class="coin-text" id="coin-text">0</span>
+      <div class="header-pills">
+        <div class="coin-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9 9.5c0-1 1-1.5 3-1.5s3 1 3 2-1 1.5-3 1.5-3 .5-3 1.5 1 2 3 2 3-.5 3-1.5"/></svg>
+          <span class="coin-text" id="coin-text">0</span>
+        </div>
+        <div class="gem-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6FD8" stroke-width="1.6"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg>
+          <span class="gem-text" id="gem-text">0</span>
+        </div>
       </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <!-- TAB: ĐÀO -->
     <div class="play-area" id="tab-play">
+      <div class="level-badge-row">
+        <div class="level-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 9l9 13 9-13-9-7Z"/></svg>
+          <span id="level-text">Cấp 1</span>
+        </div>
+      </div>
       <div class="crystal-wrap" id="crystal-wrap">
         <div class="glow" id="glow"></div>
         <div class="crystal-btn" id="crystal-btn">
@@ -236,17 +327,64 @@
         </div>
       </div>
       <div class="tap-hint">Chạm viên đá để đào xu</div>
-      <div class="energy-row">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
-        <div class="energy-track"><div class="energy-fill" id="energy-fill" style="width:100%"></div></div>
-        <span class="energy-text" id="energy-text">500/500</span>
+
+      <div class="bar-row">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
+        <div class="bar-track"><div class="bar-fill energy" id="energy-fill" style="width:100%"></div></div>
+        <span class="bar-text" id="energy-text">500/500</span>
       </div>
+
+      <div class="bar-row">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2"><path d="M12 2 3 9l9 13 9-13-9-7Z"/></svg>
+        <div class="bar-track"><div class="bar-fill xp" id="xp-fill" style="width:0%"></div></div>
+        <span class="bar-text" id="xp-text">0/500</span>
+      </div>
+
       <button class="checkin-btn" id="checkin-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2 1 4-1 5-1 5"/></svg>
         <span id="checkin-label">Điểm danh · Chuỗi 0 ngày</span>
       </button>
     </div>
 
+    <!-- TAB: SHOP -->
+    <div class="list-area hidden" id="tab-shop">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6FD8" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+        Shop
+      </div>
+      <div class="card">
+        <div class="card-label">Đổi Gem</div>
+        <div class="shop-balance-row">
+          <div class="shop-balance-box">
+            <div class="shop-balance-value" style="color:var(--gold)" id="shop-coin-balance">0</div>
+            <div class="shop-balance-label">Coin</div>
+          </div>
+          <div class="shop-balance-box">
+            <div class="shop-balance-value" style="color:var(--gem)" id="shop-gem-balance">0</div>
+            <div class="shop-balance-label">Gem</div>
+          </div>
+        </div>
+        <div class="sub-text" style="margin-top:10px;">Tỉ lệ quy đổi: 100.000 coin = 1 gem</div>
+        <div class="exchange-row">
+          <input class="text-input" id="exchange-input" type="number" step="100000" min="100000" placeholder="Nhập số coin (bội số của 100.000)" style="margin-bottom:0;" />
+        </div>
+        <div class="quick-amount-row">
+          <button class="quick-amount-btn" data-amount="100000">100k</button>
+          <button class="quick-amount-btn" data-amount="500000">500k</button>
+          <button class="quick-amount-btn" data-amount="1000000">1tr</button>
+          <button class="quick-amount-btn" id="quick-amount-max">Tối đa</button>
+        </div>
+        <div class="exchange-preview">
+          <div class="exchange-preview-value" id="exchange-preview-gem">0 gem</div>
+          <div class="sub-text">sẽ nhận được</div>
+        </div>
+        <button class="primary-btn" id="exchange-btn" style="margin-top:12px;">Đổi ngay</button>
+        <div class="error-text" id="exchange-error"></div>
+        <div class="success-text" id="exchange-success"></div>
+      </div>
+    </div>
+
+    <!-- TAB: XẾP HẠNG -->
     <div class="list-area hidden" id="tab-leaderboard">
       <div class="section-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/></svg>
@@ -256,6 +394,41 @@
       <div class="footnote">Bảng xếp hạng hiển thị công khai cho mọi người chơi.</div>
     </div>
 
+    <!-- TAB: BẠN BÈ -->
+    <div class="list-area hidden" id="tab-friends">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.6.4 4.8 2.7 4.8 5.8"/></svg>
+        Bạn bè
+      </div>
+
+      <div class="card">
+        <div class="card-label">Link mời bạn</div>
+        <div class="ref-link-box">
+          <span class="ref-link-text" id="ref-link-text">Đang tạo link…</span>
+          <button class="copy-btn" id="ref-copy-btn">Sao chép</button>
+        </div>
+        <div class="sub-text" style="margin-top:8px;">Mời thành công +1.000 coin, cộng thêm 4% hoa hồng trên số coin bạn đó kiếm được.</div>
+      </div>
+
+      <div class="friend-stats-row" style="margin-bottom:12px;">
+        <div class="friend-stat-box">
+          <div class="friend-stat-value" id="friend-count">0</div>
+          <div class="friend-stat-label">Bạn đã mời</div>
+        </div>
+        <div class="friend-stat-box">
+          <div class="friend-stat-value" id="friend-earnings" style="color:var(--gold)">0</div>
+          <div class="friend-stat-label">Hoa hồng (coin)</div>
+        </div>
+      </div>
+
+      <div class="card-label" style="margin: 4px 2px 8px;">Mốc thưởng</div>
+      <div id="milestone-list"></div>
+
+      <div class="card-label" style="margin: 12px 2px 8px;">Bạn bè đã mời</div>
+      <div id="friend-list"></div>
+    </div>
+
+    <!-- TAB: NHIỆM VỤ -->
     <div class="list-area hidden" id="tab-missions">
       <div class="section-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><path d="M20 12v9H4v-9M2 7h20v5H2z"/><path d="M12 22V7M12 7c-1.5-3-5.5-3-5.5 0S10.5 7 12 7Zm0 0c1.5-3 5.5-3 5.5 0S13.5 7 12 7Z"/></svg>
@@ -264,18 +437,68 @@
       <div id="missions-list"></div>
     </div>
 
+    <!-- TAB: VÍ -->
+    <div class="list-area hidden" id="tab-wallet">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.5" r="1"/></svg>
+        Ví
+      </div>
+      <div class="wallet-hero">
+        <div class="wallet-hero-box coin">
+          <div class="wallet-hero-value" style="color:var(--gold)" id="wallet-coin">0</div>
+          <div class="wallet-hero-label">Coin</div>
+        </div>
+        <div class="wallet-hero-box gem">
+          <div class="wallet-hero-value" style="color:var(--gem)" id="wallet-gem">0</div>
+          <div class="wallet-hero-label">Gem</div>
+        </div>
+      </div>
+      <div class="wallet-stats-grid">
+        <div class="wallet-stat-box">
+          <div class="wallet-stat-value" id="wallet-taps">0</div>
+          <div class="wallet-stat-label">Lần chạm</div>
+        </div>
+        <div class="wallet-stat-box">
+          <div class="wallet-stat-value" id="wallet-streak">0</div>
+          <div class="wallet-stat-label">Chuỗi điểm danh</div>
+        </div>
+        <div class="wallet-stat-box">
+          <div class="wallet-stat-value" id="wallet-friends">0</div>
+          <div class="wallet-stat-label">Bạn đã mời</div>
+        </div>
+        <div class="wallet-stat-box">
+          <div class="wallet-stat-value" id="wallet-commission" style="color:var(--gold)">0</div>
+          <div class="wallet-stat-label">Hoa hồng (coin)</div>
+        </div>
+      </div>
+      <div class="card-label" style="margin: 4px 2px 8px;">Lịch sử đổi gem</div>
+      <div id="wallet-history"></div>
+    </div>
+
     <div class="nav">
       <button class="nav-btn active" data-tab="play">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 4.3L6 9l4.1 1.7L12 15l1.9-4.3L18 9l-4.1-1.7L12 3Z"/></svg>
         <span>Đào</span>
       </button>
+      <button class="nav-btn" data-tab="shop">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Shop</span>
+      </button>
       <button class="nav-btn" data-tab="leaderboard">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/></svg>
         <span>Xếp hạng</span>
       </button>
+      <button class="nav-btn" data-tab="friends">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.6.4 4.8 2.7 4.8 5.8"/></svg>
+        <span>Bạn bè</span>
+      </button>
       <button class="nav-btn" data-tab="missions">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v9H4v-9M2 7h20v5H2z"/></svg>
         <span>Nhiệm vụ</span>
+      </button>
+      <button class="nav-btn" data-tab="wallet">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <span>Ví</span>
       </button>
     </div>
   </div>
