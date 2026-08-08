@@ -1,12 +1,17 @@
-const MAX_ENERGY = 200;
-const ENERGY_REGEN_MS = 300000;
+const MAX_ENERGY = 500;
+const ENERGY_REGEN_MS = 2000;
 
 const MINING_MAX_LEVEL = 20;
 const MINING_BASE_XP = 500;
 const MINING_XP_STEP = 300;
-const MINING_XP_PER_TAP = 1;
+const MINING_XP_PER_TAP = 10;
 
 const GEM_EXCHANGE_RATE = 100000;
+
+const AD_ZONE_ID = "11524128";
+const AD_ENERGY_REWARD = 20;
+const AD_DAILY_LIMIT = 10;
+const AD_COOLDOWN_SECONDS = 15 * 60;
 
 const REFERRAL_MILESTONES = [
   { count: 5, coin: 5000, gem: 5 },
@@ -135,6 +140,8 @@ function defaultState() {
     claimedReferralMilestones: [],
     referredUsers: [],
     gemExchangeLog: [],
+    adViewsToday: 0,
+    adLastViewTs: 0,
   };
 }
 
@@ -181,6 +188,14 @@ async function apiClaimReferralMilestone(milestone) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ uid: PLAYER_ID, milestone, initData }),
+  });
+  return res.json();
+}
+async function apiWatchAd() {
+  const res = await fetch("/api/watch-ad", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid: PLAYER_ID, initData }),
   });
   return res.json();
 }
@@ -276,6 +291,7 @@ function render() {
   document.getElementById("level-text").textContent = `Cấp ${state.miningLevel}`;
   renderBars();
   renderCheckin();
+  renderWatchAdButton();
   renderMissions();
   renderShop();
   renderFriends();
@@ -304,6 +320,120 @@ function renderCheckin() {
     ? `Đã điểm danh · Chuỗi ${state.streak} ngày`
     : `Điểm danh · Chuỗi ${state.streak} ngày`;
 }
+
+// --- Xem quảng cáo nhận thưởng năng lượng ---
+let adCooldownTimer = null;
+
+function formatCooldown(totalSeconds) {
+  const s = Math.max(0, Math.ceil(totalSeconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+function renderWatchAdButton() {
+  const btn = document.getElementById("watch-ad-btn");
+  const label = document.getElementById("watch-ad-label");
+  const errorEl = document.getElementById("watch-ad-error");
+
+  if (state.adViewsToday >= AD_DAILY_LIMIT) {
+    clearInterval(adCooldownTimer);
+    btn.disabled = true;
+    label.textContent = `✅ Đã hết lượt hôm nay · ${AD_DAILY_LIMIT}/${AD_DAILY_LIMIT}`;
+    return;
+  }
+
+  const elapsedSinceLast = Date.now() - (state.adLastViewTs || 0);
+  const remaining = AD_COOLDOWN_SECONDS - Math.floor(elapsedSinceLast / 1000);
+
+  if (state.adLastViewTs && remaining > 0) {
+    btn.disabled = true;
+    startAdCooldownCountdown(remaining);
+  } else {
+    clearInterval(adCooldownTimer);
+    btn.disabled = false;
+    label.textContent = `Xem quảng cáo (+${AD_ENERGY_REWARD} năng lượng) · ${state.adViewsToday}/${AD_DAILY_LIMIT}`;
+  }
+  errorEl.style.display = "none";
+}
+
+function startAdCooldownCountdown(seconds) {
+  const btn = document.getElementById("watch-ad-btn");
+  const label = document.getElementById("watch-ad-label");
+  clearInterval(adCooldownTimer);
+  let remaining = seconds;
+  const tick = () => {
+    if (remaining <= 0) {
+      clearInterval(adCooldownTimer);
+      btn.disabled = false;
+      label.textContent = `Xem quảng cáo (+${AD_ENERGY_REWARD} năng lượng) · ${state.adViewsToday}/${AD_DAILY_LIMIT}`;
+      return;
+    }
+    btn.disabled = true;
+    label.textContent = `Chờ ${formatCooldown(remaining)} để xem tiếp`;
+    remaining -= 1;
+  };
+  tick();
+  adCooldownTimer = setInterval(tick, 1000);
+}
+
+document.getElementById("watch-ad-btn").addEventListener("click", () => {
+  const btn = document.getElementById("watch-ad-btn");
+  const label = document.getElementById("watch-ad-label");
+  const errorEl = document.getElementById("watch-ad-error");
+  errorEl.style.display = "none";
+
+  const showAdFn = window["show_" + AD_ZONE_ID];
+  if (typeof showAdFn !== "function") {
+    errorEl.textContent = "Không tải được quảng cáo, thử lại sau.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.classList.add("loading");
+  const oldLabel = label.textContent;
+  label.textContent = "Đang tải quảng cáo...";
+
+  showAdFn()
+    .then(async () => {
+      btn.classList.remove("loading");
+      try {
+        const result = await apiWatchAd();
+        if (result.ok) {
+          state.energy = result.energy;
+          state.adViewsToday = result.adViewsToday;
+          state.adLastViewTs = Date.now();
+          renderBars();
+          renderWatchAdButton();
+          showToast(`🎬 +${AD_ENERGY_REWARD} năng lượng!`);
+        } else if (result.error === "limit_reached") {
+          state.adViewsToday = result.adViewsToday ?? AD_DAILY_LIMIT;
+          renderWatchAdButton();
+        } else if (result.error === "cooldown") {
+          state.adLastViewTs = Date.now() - (AD_COOLDOWN_SECONDS - result.remainingSeconds) * 1000;
+          startAdCooldownCountdown(result.remainingSeconds);
+        } else {
+          btn.disabled = false;
+          label.textContent = oldLabel;
+          errorEl.textContent = "Không nhận được thưởng, thử lại sau.";
+          errorEl.style.display = "block";
+        }
+      } catch {
+        btn.disabled = false;
+        label.textContent = oldLabel;
+        errorEl.textContent = "Lỗi kết nối, thử lại sau.";
+        errorEl.style.display = "block";
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.classList.remove("loading");
+      label.textContent = oldLabel;
+      errorEl.textContent = "Quảng cáo chưa tải xong hoặc bị chặn, thử lại sau.";
+      errorEl.style.display = "block";
+    });
+});
 
 function renderMissions() {
   const list = document.getElementById("missions-list");

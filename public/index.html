@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Đào Đá Quý</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='//libtl.com/sdk.js' data-zone='11524128' data-sdk='show_11524128'></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -182,6 +183,8 @@
     font-size: 13px; font-weight: 600; cursor: pointer;
   }
   .checkin-btn:disabled { opacity: .5; cursor: default; }
+  .ad-btn { border-color: rgba(62,216,195,0.35); }
+  .ad-btn.loading { opacity: .7; }
 
   /* generic cards / lists */
   .list-area { flex: 1; padding: 8px 18px 16px; overflow-y: auto; }
@@ -331,7 +334,7 @@
       <div class="bar-row">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
         <div class="bar-track"><div class="bar-fill energy" id="energy-fill" style="width:100%"></div></div>
-        <span class="bar-text" id="energy-text">200/200</span>
+        <span class="bar-text" id="energy-text">500/500</span>
       </div>
 
       <div class="bar-row">
@@ -344,6 +347,12 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B942" stroke-width="2"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2 1 4-1 5-1 5"/></svg>
         <span id="checkin-label">Điểm danh · Chuỗi 0 ngày</span>
       </button>
+
+      <button class="checkin-btn ad-btn" id="watch-ad-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ED8C3" stroke-width="2"><path d="M15 10 20 6.5v11L15 14"/><rect x="2" y="6" width="13" height="12" rx="2"/></svg>
+        <span id="watch-ad-label">Xem quảng cáo (+20 năng lượng) · 0/10</span>
+      </button>
+      <div class="error-text" id="watch-ad-error" style="text-align:center;"></div>
     </div>
 
     <!-- TAB: SHOP -->
