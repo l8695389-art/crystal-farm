@@ -1,5 +1,5 @@
-const MAX_ENERGY = 200;
-const ENERGY_REGEN_MS = 300000; // 1 energy per 300s
+const MAX_ENERGY = 500;
+const ENERGY_REGEN_MS = 2000; // 1 energy per 2s
 
 // ── Cấp độ đào ──
 const MINING_MAX_LEVEL = 20;
@@ -11,13 +11,18 @@ const GEM_EXCHANGE_RATE = 100000; // 100.000 coin = 1 gem
 
 // ── Mời bạn bè ──
 const REFERRAL_SIGNUP_BONUS = 1000; // coin cho người mời khi mời thành công 1 bạn mới
-const REFERRAL_COMMISSION_RATE = 0.05; // hoa hồng 5% trên số coin người được mời kiếm thêm được
+const REFERRAL_COMMISSION_RATE = 0.04; // hoa hồng 4% trên số coin người được mời kiếm thêm được
 const REFERRAL_MILESTONES = [
   { count: 5, coin: 5000, gem: 5 },
   { count: 10, coin: 12000, gem: 12 },
   { count: 20, coin: 30000, gem: 30 },
   { count: 50, coin: 100000, gem: 100 },
 ];
+
+// ── Xem quảng cáo nhận thưởng ──
+const AD_ENERGY_REWARD = 20; // năng lượng cộng thêm mỗi lượt xem
+const AD_DAILY_LIMIT = 10; // tối đa 10 lượt/ngày
+const AD_COOLDOWN_MS = 15 * 60 * 1000; // chờ tối thiểu 15 phút giữa 2 lượt
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -28,6 +33,12 @@ function json(data, status = 200) {
 
 function xpNeededForLevel(level) {
   return MINING_BASE_XP + MINING_XP_STEP * (level - 1);
+}
+
+// Ngày hiện tại theo giờ Việt Nam (YYYY-MM-DD) — dùng để reset lượt xem
+// quảng cáo mỗi ngày đúng theo múi giờ người chơi thường dùng.
+function ngayVnHomNay() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 function rowToPlayer(row) {
@@ -54,6 +65,12 @@ function rowToPlayer(row) {
     claimedReferralMilestones: JSON.parse(row.claimed_referral_milestones || "[]"),
     referredUsers: JSON.parse(row.referred_users || "[]"),
     gemExchangeLog: JSON.parse(row.gem_exchange_log || "[]"),
+    // Lượt xem quảng cáo hôm nay — trả về 0 nếu ad_views_date không phải hôm
+    // nay (đã sang ngày mới), để client không cần tự tính lại việc reset.
+    adViewsToday: row.ad_views_date === ngayVnHomNay() ? row.ad_views_today || 0 : 0,
+    adDailyLimit: AD_DAILY_LIMIT,
+    adCooldownSeconds: AD_COOLDOWN_MS / 1000,
+    adLastViewTs: row.ad_last_view_ts || 0,
   };
 }
 
@@ -289,8 +306,8 @@ export default {
         // bị client gửi dữ liệu cũ đè mất giá trị thật.
         await env.DB.prepare(
           `INSERT INTO players
-            (id, nickname, username, avatar_url, coins, gems, energy, last_energy_ts, streak, last_checkin, total_taps, daily_taps, daily_taps_date, claimed_missions, mining_level, mining_xp, referred_by, referral_count, referral_earnings, claimed_referral_milestones, referred_users, gem_exchange_log, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,'[]','[]','[]',?)
+            (id, nickname, username, avatar_url, coins, gems, energy, last_energy_ts, streak, last_checkin, total_taps, daily_taps, daily_taps_date, claimed_missions, mining_level, mining_xp, referred_by, referral_count, referral_earnings, claimed_referral_milestones, referred_users, gem_exchange_log, ad_views_today, ad_views_date, ad_last_view_ts, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,'[]','[]','[]',0,NULL,0,?)
            ON CONFLICT(id) DO UPDATE SET
              nickname = excluded.nickname,
              username = excluded.username,
@@ -404,6 +421,59 @@ export default {
           gems: newGems,
           claimedReferralMilestones: claimed,
           reward: config,
+        });
+      }
+
+      // ── Xem quảng cáo nhận thưởng năng lượng ──
+      if (url.pathname === "/api/watch-ad" && request.method === "POST") {
+        const body = await request.json();
+        const uid = body.uid;
+        if (!uid) return json({ ok: false, error: "invalid_payload" }, 400);
+        if (!(await assertOwnsUid(env, body.initData, uid))) {
+          return json({ ok: false, error: "unauthorized" }, 401);
+        }
+
+        const row = await env.DB.prepare("SELECT * FROM players WHERE id = ?").bind(uid).first();
+        if (!row) return json({ ok: false, error: "player_not_found" }, 404);
+
+        const today = ngayVnHomNay();
+        const viewsToday = row.ad_views_date === today ? row.ad_views_today || 0 : 0;
+
+        if (viewsToday >= AD_DAILY_LIMIT) {
+          return json({ ok: false, error: "limit_reached", adViewsToday: viewsToday, adDailyLimit: AD_DAILY_LIMIT });
+        }
+
+        const now = Date.now();
+        const lastViewTs = row.ad_last_view_ts || 0;
+        const elapsedSinceLast = now - lastViewTs;
+        if (lastViewTs && elapsedSinceLast < AD_COOLDOWN_MS) {
+          return json({
+            ok: false,
+            error: "cooldown",
+            remainingSeconds: Math.ceil((AD_COOLDOWN_MS - elapsedSinceLast) / 1000),
+          });
+        }
+
+        // Áp dụng phần năng lượng đã hồi tự nhiên trước khi cộng thưởng, để
+        // không "mất" phần hồi tích luỹ từ lần đồng bộ trước.
+        const regenElapsed = now - (row.last_energy_ts || now);
+        const regen = Math.floor(regenElapsed / ENERGY_REGEN_MS);
+        const energyAfterRegen = Math.min(MAX_ENERGY, (row.energy || 0) + Math.max(0, regen));
+        const newEnergy = Math.min(MAX_ENERGY, energyAfterRegen + AD_ENERGY_REWARD);
+        const newViewsToday = viewsToday + 1;
+
+        await env.DB.prepare(
+          `UPDATE players SET energy = ?, last_energy_ts = ?, ad_views_today = ?, ad_views_date = ?, ad_last_view_ts = ?, updated_at = ? WHERE id = ?`
+        )
+          .bind(newEnergy, now, newViewsToday, today, now, now, uid)
+          .run();
+
+        return json({
+          ok: true,
+          energy: newEnergy,
+          adViewsToday: newViewsToday,
+          adDailyLimit: AD_DAILY_LIMIT,
+          adCooldownSeconds: AD_COOLDOWN_MS / 1000,
         });
       }
 
