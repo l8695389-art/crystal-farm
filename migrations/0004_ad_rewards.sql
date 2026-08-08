@@ -1,0 +1,3 @@
+ALTER TABLE players ADD COLUMN ad_views_today INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE players ADD COLUMN ad_views_date TEXT;
+ALTER TABLE players ADD COLUMN ad_last_view_ts INTEGER NOT NULL DEFAULT 0;

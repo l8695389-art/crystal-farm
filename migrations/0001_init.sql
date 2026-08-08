@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS players (
   claimed_referral_milestones TEXT NOT NULL DEFAULT '[]',
   referred_users TEXT NOT NULL DEFAULT '[]',
   gem_exchange_log TEXT NOT NULL DEFAULT '[]',
+  ad_views_today INTEGER NOT NULL DEFAULT 0,
+  ad_views_date TEXT,
+  ad_last_view_ts INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL
 );
 
