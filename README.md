@@ -52,7 +52,13 @@ Nếu database đã tồn tại từ trước khi có gem/cấp đào/mời bạ
 wrangler d1 execute crystal_tap_db --remote --file=./migrations/0003_gems_level_referral.sql
 ```
 
-*(Cài mới hoàn toàn thì bỏ qua bước này — `0001_init.sql` đã có sẵn đủ cột.)*
+Nếu database đã tồn tại từ trước khi có tính năng xem quảng cáo, chạy thêm:
+
+```bash
+wrangler d1 execute crystal_tap_db --remote --file=./migrations/0004_ad_rewards.sql
+```
+
+*(Cài mới hoàn toàn thì bỏ qua 2 bước trên — `0001_init.sql` đã có sẵn đủ cột.)*
 
 ### 4. (Khuyến nghị) Bật xác thực dữ liệu Telegram
 
@@ -233,6 +239,18 @@ Cài mới hoàn toàn thì chỉ cần chạy `0001_init.sql` (đã có sẵn 2
 ### Ví (tab Ví)
 - Tổng quan số dư coin/gem, thống kê nhanh (lần chạm, chuỗi điểm danh, số
   bạn mời, hoa hồng đã nhận) và lịch sử đổi gem gần nhất.
+
+### Xem quảng cáo nhận năng lượng (tab Đào)
+- Dùng Monetag rewarded interstitial (`show_11524128()`), zone ID đã gắn sẵn
+  trong `public/index.html`. Đổi zone ID khác thì sửa cả 2 chỗ: script tag
+  `data-zone` trong `index.html` và hằng số `AD_ZONE_ID` trong `app.js`.
+- Mỗi lượt xem thành công: **+20 năng lượng** (không vượt quá tối đa 500).
+- Giới hạn **10 lượt/ngày** (reset theo giờ Việt Nam 00:00), **cách nhau tối
+  thiểu 15 phút** giữa 2 lượt.
+- Toàn bộ giới hạn/cooldown được **xác thực ở server** (`POST /api/watch-ad`)
+  — client chỉ gọi Monetag SDK để hiển thị quảng cáo, sau đó server mới là
+  nơi quyết định có cộng thưởng hay không, tránh trường hợp ai đó tự gọi
+  thẳng hàm JS để cộng năng lượng khống.
 
 ## Bảo mật
 

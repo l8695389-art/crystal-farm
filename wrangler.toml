@@ -10,18 +10,18 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "crystal_tap_db"
-database_id = "614f96af-be19-4f99-85d9-3e2b2ee48c8e"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 
 [vars]
 # URL của chính Worker này (sau khi deploy), dùng để gắn nút "Chơi ngay"
 # trong tin nhắn trả lời /start. Ví dụ: https://crystal-tap-game.<subdomain>.workers.dev
-MINI_APP_URL = "https://pages.crystal-farm.workers.dev/"
+MINI_APP_URL = "https://REPLACE_WITH_YOUR_WORKER_URL"
 
 # Username bot (KHÔNG có dấu @) và short name của Mini App (đặt lúc /newapp
 # với BotFather) — dùng để dựng link mời bạn dạng:
 #   https://t.me/<BOT_USERNAME>/<APP_SHORT_NAME>?startapp=ref_<uid>
-BOT_USERNAME = "crystalfarmx_bot"
-APP_SHORT_NAME = "crystalfarm"
+BOT_USERNAME = "REPLACE_WITH_YOUR_BOT_USERNAME"
+APP_SHORT_NAME = "REPLACE_WITH_YOUR_APP_SHORT_NAME"
 
 # Optional: set your Telegram bot token as a secret to validate initData
 # và để bot có thể gửi tin nhắn trả lời /start
